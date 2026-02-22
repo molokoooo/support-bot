@@ -1,22 +1,18 @@
-import asyncio
 import json
 import os
-import shutil
 from pathlib import Path
 
 from aiogram import F, Bot
-from aiogram.dispatcher.middlewares import data
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from dotenv import load_dotenv
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message, FSInputFile
+from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.utils.media_group import MediaGroupBuilder
 
 from src.root.command import root_menu
 from .. import router
 from src.crud.user import check_role
-from src.admin.faq.class_state import FAQState, FAQEditState
+from src.admin.faq.class_state import FAQEditState
 from src.database.redisDB import r_session
 from src.crud.faq import load_faq_list, load_faq_info
 from src.database.sql_engine import get_db

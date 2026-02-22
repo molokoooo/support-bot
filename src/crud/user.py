@@ -33,17 +33,23 @@ async def check_role(telegram_id: str):
 
     return role
 
-def escape_markdown_v2(text: str) -> str:
-    """
-    Экранирует все специальные символы для MarkdownV2 в Telegram.
+def markdownv2_to_html(text: str) -> str:
+    # Сначала убираем экранирование MarkdownV2
+    text = text.replace(r'\*', '*').replace(r'\_', '_').replace(r'\~', '~').replace(r'\`', '`').replace(r'\\', '\\')
 
-    Args:
-        text (str): Исходный текст.
+    # Ссылки: [текст](URL) -> <a href="URL">текст</a>
+    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', text)
 
-    Returns:
-        str: Текст с экранированными символами.
-    """
-    # Все символы, которые нужно экранировать в MarkdownV2
-    # \ _ * [ ] ( ) ~ ` > # + - = | { } . !
-    escape_chars = r'[_*\[\]()~`>#+-=|{}.!\\]'
-    return re.sub(escape_chars, lambda match: f"\\{match.group(0)}", text)
+    # Жирный: *текст* -> <b>текст</b>
+    text = re.sub(r'\*(.+?)\*', r'<b>\1</b>', text)
+
+    # Курсив: _текст_ -> <i>текст</i>
+    text = re.sub(r'\_(.+?)\_', r'<i>\1</i>', text)
+
+    # Зачеркнутый: ~текст~ -> <s>текст</s>
+    text = re.sub(r'\~(.+?)\~', r'<s>\1</s>', text)
+
+    # Моноширинный: `текст` -> <code>текст</code>
+    text = re.sub(r'\`(.+?)\`', r'<code>\1</code>', text)
+
+    return text

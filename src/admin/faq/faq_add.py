@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from aiogram import F, Bot
+from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -9,39 +9,12 @@ from aiogram.utils.media_group import MediaGroupBuilder
 
 from src.root.command import root_menu
 from .. import router
-from src.crud.user import check_role
+from src.crud.user import check_role, markdownv2_to_html
 from src.admin.faq.class_state import FAQState
 from src.database.sql_engine import get_db
 from src.model.faq_model import FAQ
 
 assets_path = os.getenv("ASSETS_PATH")
-
-@router.callback_query(F.data == "faq:edit")
-async def faq_edit(callback: CallbackQuery):
-    telegram_id = str(callback.from_user.id)
-    role = await check_role(telegram_id)
-
-    builder = InlineKeyboardBuilder()
-    builder.button(text="➕ FAQ", callback_data="faq:edit:add")
-    builder.button(text="➖ FAQ", callback_data="faq:edit:list:1")
-    builder.button(text="✏️ Изменить FAQ", callback_data="faq:edit:list:1")
-    builder.button(text="️🧹 Очистить кещ", style="success", callback_data="faq:redis:clear")
-    builder.button(text="◀️ Назад", callback_data="back:menu")
-    builder.adjust(2, 1)
-
-    button = builder.as_markup()
-
-    if role == "User" or role == "Support":
-        await callback.answer("❌ Не достаточно прав")
-        return await root_menu(cal=callback, type="State")
-
-    elif role == "Admin" or role == "SuperAdmin" or role == "FAQ":
-        text = """
-Выбери действия:
-"""
-        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
-    await callback.answer()
-
 
 @router.callback_query(F.data == "faq:edit:add")
 async def faq_edit(callback: CallbackQuery, state: FSMContext):
@@ -86,7 +59,15 @@ async def faq_edit(message: Message, state: FSMContext):
         if len(message.text) > 25:
             return await message.answer("❌Слишком много символов! Напиши до 25 символов", reply_markup=button)
         await state.update_data(title=message.text)
-        text = "Напиши описание:"
+        text = """
+Напиши описание!
+Шпаргалка:
+Ссылки: [текст](URL) -> <a href="example.com">текст</a>
+Жирный: *текст* -> <b>текст</b>
+Курсив: _текст_ -> <i>текст</i>
+Зачеркнутый: ~текст~ -> <s>текст</s>
+Моноширинный: `текст` -> <code>текст</code>
+"""
         await message.answer(text, parse_mode="HTML", reply_markup=button)
         await state.set_state(FAQState.description)
 
@@ -162,7 +143,7 @@ async def faq_edit(message: Message, state: FSMContext):
     await message.answer(text=text, parse_mode="HTML", reply_markup=button)
 
 @router.callback_query(F.data == "faq:media:conf")
-async def faq_edit(callback: CallbackQuery, state: FSMContext, bot: Bot):
+async def faq_edit(callback: CallbackQuery, state: FSMContext):
     telegram_id = str(callback.from_user.id)
     role = await check_role(telegram_id)
 
@@ -173,9 +154,9 @@ async def faq_edit(callback: CallbackQuery, state: FSMContext, bot: Bot):
     data = await state.get_data()
     media_list = data.get("media", [])
     title = data["title"]
-    description = data["description"]
+    description = markdownv2_to_html(data["description"])
 
-    text =f"""*{title}*\n\n{description}"""
+    text =f"""<b>{title}</b>\n\n{description}"""
 
     builder = InlineKeyboardBuilder()
     builder.button(text="✅ Принять", callback_data="faq:add:accept")
@@ -219,7 +200,7 @@ async def faq_edit(callback: CallbackQuery, state: FSMContext, bot: Bot):
         await callback.bot.send_media_group(chat_id=callback.message.chat.id, media=media_group.build())
 
         # ====== Кнопки отдельным сообщением ======
-        await callback.message.answer(text="Выберите действие:", reply_markup=button)
+        await callback.message.answer(text="Выберите действие:", parse_mode="HTML", reply_markup=button)
 
     await state.set_state(None)
     await callback.answer()
@@ -243,9 +224,9 @@ async def skip_media(callback: CallbackQuery, state: FSMContext):
 
     elif role == "Admin" or role == "SuperAdmin" or role == "FAQ":
         title = data.get("title", "")
-        description = data.get("description", "")
+        description = markdownv2_to_html(data.get("description", ""))
 
-        text = f"{title}\n\n{description}"
+        text = f"<b>{title}</b>\n\n{description}"
         await callback.message.answer(text, parse_mode="HTML", reply_markup=button)
 
     await state.set_state(None)
@@ -271,7 +252,7 @@ async def accept_faq(callback: CallbackQuery, state: FSMContext):
         with get_db() as db:
             faq_new = FAQ(
                 title=title,
-                description=description,
+                description=markdownv2_to_html(description),
                 media=[]  # временно пусто
             )
 

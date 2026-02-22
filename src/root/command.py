@@ -1,3 +1,5 @@
+import os
+
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.filters import Command
@@ -6,6 +8,8 @@ from typing import Optional, Literal
 
 from src.crud.user import check_role
 from src.root import router
+
+name_company = os.getenv("COMPANY")
 
 async def root_menu(
     cal, type: Literal["Command", "Callback", "State", "CallbackAndImage"], state: Optional[FSMContext] = None
@@ -23,7 +27,7 @@ async def root_menu(
 
     role = await check_role(telegram_id)
 
-    if role == ("SuperAdmin", "Admin"):
+    if role in ("SuperAdmin", "Admin"):
         builder.button(text="🛡 Админ меню", style="danger", callback_data="admin_panel:menu")
     elif role == "FAQ":
         builder.button(text="⁉️ Изменить FAQ", style="danger", callback_data="faq:edit")
@@ -33,7 +37,20 @@ async def root_menu(
     builder.adjust(2, 1)
     button = builder.as_markup()
 
-    text = f"Привет <code>{telegram_id}</code>, твоя роль: {role}!"
+    text = f"""
+Привет! Это официальный бот <b>{name_company}</b>!  
+
+<i>Убедительная просьба:</i>  
+Сначала проверьте, нет ли ответа на ваш вопрос в разделе ⁉️ <b>FAQ</b>.  
+
+Если ответа нет — задавайте вопрос в 📨 <b>Тех. поддержку</b>.  
+
+⚠️ В противном случае ваш вопрос может быть проигнорирован.  
+
+🕘 <b>Работа Тех. поддержки:</b>  
+- Будни: 9:00–18:00  
+- Выходные: 10:00–17:00
+"""
 
     if type == "Command":
         await cal.answer(text, parse_mode="HTML", reply_markup=button)
