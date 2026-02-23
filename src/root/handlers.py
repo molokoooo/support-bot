@@ -1,6 +1,7 @@
 import os
 
 from aiogram import F, Bot
+from aiogram.exceptions import TelegramBadRequest
 from dotenv import load_dotenv
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton
@@ -26,7 +27,10 @@ async def faq(callback: CallbackQuery):
     button = await load_faq_list(page, role="User")
 
     text = f"Все ⁉️FAQ (часто задаваемые вопросы):"
-    await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+    try:
+        await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data == "about:menu")
@@ -83,7 +87,10 @@ async def about(callback: CallbackQuery):
 Спасибо, что выбираете <b>{name_company}</b>!
 """
 
-    await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+    try:
+        await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data == "back:menu")
@@ -127,5 +134,8 @@ async def faq_pagination(callback: CallbackQuery):
     text = f"Все ⁉️FAQ (часто задаваемые вопросы):"
 
     # ==== Отправляем новое сообщение с кнопками ====
-    await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+    try:
+        await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+    except TelegramBadRequest:
+        pass
 

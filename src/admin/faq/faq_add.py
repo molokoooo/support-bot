@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 from aiogram import F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -33,8 +34,11 @@ async def faq_edit(callback: CallbackQuery, state: FSMContext):
         text = """
 Напиши заголовок:
 """
-        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
-        await state.set_state(FAQState.title)
+        try:
+            await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+            await state.set_state(FAQState.title)
+        except TelegramBadRequest:
+            pass
 
 
 @router.message(FAQState.title)

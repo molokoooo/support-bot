@@ -122,7 +122,10 @@ async def support_answer(callback: CallbackQuery):
 
     text = f"{ru_state} вопросы:"
 
-    await callback.message.edit_text(text=text, reply_markup=button)
+    try:
+        await callback.message.edit_text(text=text, reply_markup=button)
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data.startswith("support:answer:menu-state:"))
@@ -354,10 +357,13 @@ async def answer_ticket(callback: CallbackQuery, state: FSMContext):
     button = builder.as_markup()
 
     logging.warning(f'Пользователь: {telegram_id} отвечает на вопрос: {ticket_id}')
-    await callback.message.edit_text("✏️ Введите ответ на обращение:", reply_markup=button)
-    await state.update_data(ticket_id=ticket_id)
-    await state.set_state(TicketAnswer.waiting_for_answer)
-    await callback.answer()
+    try:
+        await callback.message.edit_text("✏️ Введите ответ на обращение:", reply_markup=button)
+        await state.update_data(ticket_id=ticket_id)
+        await state.set_state(TicketAnswer.waiting_for_answer)
+        await callback.answer()
+    except TelegramBadRequest:
+        pass
 
 
 @router.message(TicketAnswer.waiting_for_answer)

@@ -8,9 +8,7 @@ from redis.exceptions import ConnectionError
 from src.crud.faq import remove_old_tickets
 from src.database.redisDB import r_session
 from src.database.sql_engine import Base, engine
-from src import dp, token
-
-logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
+from src import dp, token, logging_setting
 
 async def main():
     asyncio.create_task(remove_old_tickets())
@@ -36,7 +34,5 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
-
-# Фикс багов(при редактировании поиск по id...
 # Уведомления о том что написал в тех поддержку и сделать по 1 в строчку
-# Общая кнопка очистить кэш
+# Поиск в FAQ

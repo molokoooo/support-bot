@@ -1,4 +1,5 @@
 from aiogram import F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -23,6 +24,7 @@ async def admin_panel_menu(callback: CallbackQuery):
     builder.button(text="👥 Изменить о нас", callback_data="about:menu:edit")
     builder.button(text="⁉️ Изменить FAQ", callback_data="faq:edit")
     builder.button(text="📨 Тех. поддержка", callback_data="support:answer:menu:all:1")
+    builder.button(text="🧹 Очистить кэш", callback_data="admin:redis:clear")
     builder.button(text="◀️ Назад", callback_data="back:menu")
 
     if role == "Admin":
@@ -40,7 +42,11 @@ async def admin_panel_menu(callback: CallbackQuery):
 ⁉️ <b>Изменить FAQ</b> — редактирование часто задаваемых вопросов: добавление, удаление, правка существующих.
 📨 <b>Тех. поддержка</b> — доступ к меню технической поддержки, где можно просматривать и отвечать на обращения пользователей.
 """
-    await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+
+    try:
+        await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data == "faq:edit")
@@ -69,7 +75,10 @@ async def faq_edit(callback: CallbackQuery):
         text = """
 Выбери действия:
 """
-        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+        try:
+            await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+        except TelegramBadRequest:
+            pass
     await callback.answer()
 
 
@@ -89,7 +98,10 @@ async def about_edit(callback: CallbackQuery):
     builder.adjust(2, 1)
     button = builder.as_markup()
 
-    await callback.message.edit_text(text="Выбери действие:", parse_mode="HTML", reply_markup=button)
+    try:
+        await callback.message.edit_text(text="Выбери действие:", parse_mode="HTML", reply_markup=button)
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data == "about:menu:edit:state")
@@ -108,5 +120,8 @@ async def about_edit(callback: CallbackQuery, state: FSMContext):
     builder.adjust(2, 1)
     button = builder.as_markup()
 
-    await state.clear()
-    await callback.message.edit_text(text="Выбери действие:", parse_mode="HTML", reply_markup=button)
+    try:
+        await state.clear()
+        await callback.message.edit_text(text="Выбери действие:", parse_mode="HTML", reply_markup=button)
+    except TelegramBadRequest:
+        pass

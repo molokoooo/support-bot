@@ -1,5 +1,6 @@
 import os
 
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.filters import Command
@@ -59,7 +60,10 @@ async def root_menu(
         await cal.message.delete()
         await cal.message.answer(text, parse_mode="HTML", reply_markup=button)
     elif type == "Callback":
-        await cal.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+        try:
+            await cal.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+        except TelegramBadRequest:
+            pass
     elif type == "State":
         await state.clear()
         await cal.message.delete()

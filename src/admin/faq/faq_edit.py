@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from aiogram import F, Bot
+from aiogram.exceptions import TelegramBadRequest
 from sqlalchemy import select
 from dotenv import load_dotenv
 from aiogram.fsm.context import FSMContext
@@ -36,7 +37,10 @@ async def show_edit_list(callback: CallbackQuery):
     button = await load_faq_list(page, "Admin")
     text="Выбери FAQ:"
 
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+    try:
+        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data.startswith("faq:list_edit:"))
@@ -132,8 +136,11 @@ async def faq_edit_content(callback: CallbackQuery, state: FSMContext):
         text = """
 Напиши заголовок:
     """
-        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
-        await state.set_state(FAQEditState.title)
+        try:
+            await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+            await state.set_state(FAQEditState.title)
+        except TelegramBadRequest:
+            pass
 
 
 @router.callback_query(F.data == "faq:edit:description")
@@ -152,8 +159,11 @@ async def faq_edit_content(callback: CallbackQuery, state: FSMContext):
         text = """
 Напиши описание:
         """
-        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
-        await state.set_state(FAQEditState.description)
+        try:
+            await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+            await state.set_state(FAQEditState.description)
+        except TelegramBadRequest:
+            pass
 
 
 @router.callback_query(F.data == "faq:edit:media")
@@ -171,9 +181,12 @@ async def faq_edit_content(callback: CallbackQuery, state: FSMContext):
     text = """
 Отправь 1 изоображение или видео:
         """
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
-    await state.update_data(media=None)
-    await state.set_state(FAQEditState.media)
+    try:
+        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=button)
+        await state.update_data(media=None)
+        await state.set_state(FAQEditState.media)
+    except TelegramBadRequest:
+        pass
 
 
 @router.message(FAQEditState.title)
@@ -417,10 +430,13 @@ async def faq_edit_media_accept(callback: CallbackQuery, state: FSMContext, bot:
     await state.clear()
 
     logging.warning(f'Пользователь: {telegram_id} поменял медия для faq: {faq_id}')
-    await callback.message.edit_text(
-        f"✅ Медиа успешно обновлено! Сохранено файлов: {len(saved_paths)}",
-        reply_markup=button
-    )
+    try:
+        await callback.message.edit_text(
+            f"✅ Медиа успешно обновлено! Сохранено файлов: {len(saved_paths)}",
+            reply_markup=button
+        )
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(
@@ -439,4 +455,7 @@ async def faq_next(callback: CallbackQuery):
     text = f"Все FAQ СТРАНИЦА:"
 
     # ==== Отправляем новое сообщение с кнопками ====
-    await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+    try:
+        await callback.message.edit_text(text=text, parse_mode="HTML", reply_markup=button)
+    except TelegramBadRequest:
+        pass

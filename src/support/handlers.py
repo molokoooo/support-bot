@@ -1,6 +1,7 @@
 import os
 
 from aiogram import F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -21,11 +22,15 @@ async def support_callback(callback: CallbackQuery, state: FSMContext):
     text =f"""
 📨 Приветствую это поддержка компании <b>{company_name}</b>! Задавайте ваш вопрос:
 """
-    await callback.message.edit_text(
-        text=text,
-        parse_mode="HTML", reply_markup= button
-    )
-    await state.set_state(TicketState.user_ticket)
+
+    try:
+        await callback.message.edit_text(
+            text=text,
+            parse_mode="HTML", reply_markup= button
+        )
+        await state.set_state(TicketState.user_ticket)
+    except TelegramBadRequest:
+        pass
 
 
 @router.message(TicketState.user_ticket)

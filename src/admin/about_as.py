@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from aiogram import F, Bot
+from aiogram.exceptions import TelegramBadRequest
 from pyexpat.errors import messages
 from sqlalchemy import select, delete
 from dotenv import load_dotenv
@@ -33,8 +34,11 @@ async def about_add(callback: CallbackQuery, state: FSMContext):
     builder.button(text="❌ Отмена", style="danger", callback_data="about:menu:edit:state")
     button = builder.as_markup()
 
-    await state.set_state(AboutState.title)
-    await callback.message.edit_text(text="Напиши название соц. сети:", reply_markup=button)
+    try:
+        await state.set_state(AboutState.title)
+        await callback.message.edit_text(text="Напиши название соц. сети:", reply_markup=button)
+    except TelegramBadRequest:
+        pass
 
 
 @router.message(AboutState.title)
@@ -117,8 +121,11 @@ async def about_accept(callback: CallbackQuery, state: FSMContext):
         await r_session.expire(f"about:{new_about.id}", 1800)
 
     logging.warning(f'Пользователь: {telegram_id} добавил "О нас" а именно: {title}')
-    await callback.message.edit_text(text="✅ Успешно добавлено!", reply_markup=button)
-    await state.clear()
+    try:
+        await callback.message.edit_text(text="✅ Успешно добавлено!", reply_markup=button)
+        await state.clear()
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data == "about:remove")
@@ -166,7 +173,10 @@ async def about_remove(callback: CallbackQuery):
 
     button = builder.as_markup()
 
-    await callback.message.edit_text(text="Выбери какую удалить:", reply_markup=button)
+    try:
+        await callback.message.edit_text(text="Выбери какую удалить:", reply_markup=button)
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data.startswith("about:remove-"))
@@ -185,7 +195,10 @@ async def about_remove(callback: CallbackQuery):
     builder.adjust(1)
     button = builder.as_markup()
 
-    await callback.message.edit_text(text="Точно удалить О нас?", reply_markup=button)
+    try:
+        await callback.message.edit_text(text="Точно удалить О нас?", reply_markup=button)
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data.startswith("about:remove:accept:"))
@@ -211,4 +224,7 @@ async def about_remove(callback: CallbackQuery):
     button = builder.as_markup()
 
     logging.warning(f'Пользователь: {telegram_id} удалил "О нас" а именно: {id}')
-    await callback.message.edit_text(text="✅ Успешно удаленно!", reply_markup=button)
+    try:
+        await callback.message.edit_text(text="✅ Успешно удаленно!", reply_markup=button)
+    except TelegramBadRequest:
+        pass

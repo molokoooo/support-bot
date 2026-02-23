@@ -2,6 +2,7 @@ import logging
 
 from aiogram import F, Bot
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -97,7 +98,11 @@ async def admin_list(callback: CallbackQuery):
     }.get(role_check, "🛡 Владельцы")
 
     logging.warning(f'Пользователь: {telegram_id} смотрит список админов')
-    await callback.message.edit_text(text=f"{role_display} админы — страница {page}/{total_pages}:", reply_markup=builder.as_markup())
+    from aiogram.exceptions import TelegramBadRequest
+    try:
+        await callback.message.edit_text(text=f"{role_display} админы — страница {page}/{total_pages}:", reply_markup=builder.as_markup())
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data.startswith("admin:edit:"))
@@ -128,7 +133,11 @@ async def admin_edit(callback: CallbackQuery):
     ]
     builder.row(*buttons)
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data=f"admin:list:all"))
-    await callback.message.edit_text(text=text, reply_markup=builder.as_markup())
+
+    try:
+        await callback.message.edit_text(text=text, reply_markup=builder.as_markup())
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data.startswith("admin:role:set"))
@@ -176,7 +185,11 @@ async def admin_set_role(callback: CallbackQuery):
     builder.row(*buttons)
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data=f"admin:list:all"))
     logging.warning(f'Пользователь: {telegram_id} поменял пользователю {result.username} роль на {role}')
-    await callback.message.edit_text(text=text, reply_markup=builder.as_markup())
+
+    try:
+        await callback.message.edit_text(text=text, reply_markup=builder.as_markup())
+    except TelegramBadRequest:
+        pass
 
 
 @router.callback_query(F.data == "admin_add_search_remove")
@@ -190,13 +203,17 @@ async def admin_add_search_remove(callback: CallbackQuery, state: FSMContext):
 
     builder = InlineKeyboardBuilder()
     builder.button(text="❌ Отмена", style="danger", callback_data=f"back:menu:state")
-    await state.set_state(AdminState.telegram_id)
-    await callback.message.edit_text(
-        text="<b>Напишите ID или username(без @) пользователя</b>\n\n"
-             "<i>⚠️ Внимание! Если пользователь не запускал бота, добавить его в админы не получится.</i>",
-        parse_mode="HTML",
-        reply_markup=builder.as_markup()
-    )
+
+    try:
+        await state.set_state(AdminState.telegram_id)
+        await callback.message.edit_text(
+            text="<b>Напишите ID или username(без @) пользователя</b>\n\n"
+                 "<i>⚠️ Внимание! Если пользователь не запускал бота, добавить его в админы не получится.</i>",
+            parse_mode="HTML",
+            reply_markup=builder.as_markup()
+        )
+    except TelegramBadRequest:
+        pass
 
 
 @router.message(AdminState.telegram_id)
@@ -211,9 +228,9 @@ async def admin_message(message: Message, state: FSMContext):
 
     with get_db() as db:
         try:
-            id_int = int(id)
-            stmt = select(User).where(User.telegram_id == id_int)
-            result = db.scalar(stmt)
+            if int(id):
+                stmt = select(User).where(User.telegram_id == id)
+                result = db.scalar(stmt)
         except ValueError:
             stmt = select(User).where(User.username == id)
             result = db.scalar(stmt)
