@@ -1,4 +1,5 @@
 import json, os, shutil
+import logging
 
 from pathlib import Path
 from aiogram import F, Bot
@@ -70,6 +71,7 @@ async def remove_faq(callback: CallbackQuery, state: FSMContext, bot: Bot):
 
     button = await load_faq_list(page, "Admin")
 
+    logging.warning(f'Пользователь: {telegram_id} удалил faq: {faq_obj.title}')
     text = "Выбери FAQ:"
     await callback.answer(f"✅ FAQ {id} успешно удалён!")
     await callback.message.answer(text=text, parse_mode="HTML", reply_markup=button)

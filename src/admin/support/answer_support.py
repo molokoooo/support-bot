@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 
 from aiogram import F, Bot
 from aiogram.exceptions import TelegramBadRequest
@@ -312,6 +313,7 @@ async def support_answer_dialog(callback: CallbackQuery, bot: Bot):
     builder.adjust(2, 1)
     button = builder.as_markup()
 
+    logging.warning(f'Пользователь: {telegram_id} рассматривает вопрос {id}')
     await callback.message.answer("Выбери действие:", reply_markup=button)
     await callback.answer()
 
@@ -332,6 +334,7 @@ async def close_ticket(callback: CallbackQuery):
         db.execute(stmt)
         db.commit()
 
+    logging.warning(f'Пользователь: {telegram_id} закрыл вопрос {ticket_id}')
     await callback.answer("✅ Обращение закрыто")
     await root_menu(callback, "Callback")
 
@@ -350,6 +353,7 @@ async def answer_ticket(callback: CallbackQuery, state: FSMContext):
     builder.button(text="◀️ Назад", callback_data=f"support:answer:menu-state:{ticket_id}")
     button = builder.as_markup()
 
+    logging.warning(f'Пользователь: {telegram_id} отвечает на вопрос: {ticket_id}')
     await callback.message.edit_text("✏️ Введите ответ на обращение:", reply_markup=button)
     await state.update_data(ticket_id=ticket_id)
     await state.set_state(TicketAnswer.waiting_for_answer)
@@ -361,6 +365,12 @@ async def receive_ticket_answer(message: Message, state: FSMContext, bot: Bot):
     data = await state.get_data()
     ticket_id = data.get("ticket_id")
     message_id = message.message_id
+    telegram_id = str(message.from_user.id)
+    role = await check_role(telegram_id)
+
+    if role in ("User", "FAQ"):
+        await message.answer("❌ Не достаточно прав")
+        return await root_menu(cal=message, type="Command")
 
     if not ticket_id:
         await message.answer("❌ Ошибка: тикет не найден.")
@@ -397,6 +407,7 @@ async def receive_ticket_answer(message: Message, state: FSMContext, bot: Bot):
                 # Если пользователь заблокировал бота, просто игнорируем
             await message.answer(f"⚠️ Не удалось отправить пользователю {ticket.user_telegram_id}: {e}")
 
+    logging.warning(f'Пользователь: {telegram_id} ответил на вопрос {ticket_id}')
     await message.answer("✅ Ответ отправлен пользователю.")
     await root_menu(message, "Command")
     await state.clear()

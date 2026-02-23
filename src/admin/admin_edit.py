@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import F, Bot
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
@@ -94,6 +96,7 @@ async def admin_list(callback: CallbackQuery):
         "SuperAdmin": "🛡 Владельцы"
     }.get(role_check, "🛡 Владельцы")
 
+    logging.warning(f'Пользователь: {telegram_id} смотрит список админов')
     await callback.message.edit_text(text=f"{role_display} админы — страница {page}/{total_pages}:", reply_markup=builder.as_markup())
 
 
@@ -172,6 +175,7 @@ async def admin_set_role(callback: CallbackQuery):
     ]
     builder.row(*buttons)
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data=f"admin:list:all"))
+    logging.warning(f'Пользователь: {telegram_id} поменял пользователю {result.username} роль на {role}')
     await callback.message.edit_text(text=text, reply_markup=builder.as_markup())
 
 
@@ -232,5 +236,6 @@ async def admin_message(message: Message, state: FSMContext):
     builder.row(*buttons)
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data=f"admin:list:all"))
 
+    logging.warning(f'Пользователь: {telegram_id} нашёл пользователя {result.username}')
     await message.answer(text=text, reply_markup=builder.as_markup())
     await state.clear()

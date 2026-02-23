@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -232,6 +233,7 @@ async def faq_edit(message: Message, state: FSMContext):
                 await r_session.set(redis_key, json.dumps(faq_list, ensure_ascii=False), ex=1800)
 
         text = "✅ Успешно измененно!"
+        logging.warning(f'Пользователь: {telegram_id} поменял заголовок для faq: {id}')
         await message.answer(text, parse_mode="HTML", reply_markup=button)
         await state.clear()
 
@@ -295,6 +297,7 @@ async def faq_edit(message: Message, state: FSMContext):
 
         text = "✅ Успешно измененно!"
 
+        logging.warning(f'Пользователь: {telegram_id} поменял описание для faq: {id}')
         await message.answer(text, parse_mode="HTML", reply_markup=button)
         await state.clear()
 
@@ -413,6 +416,7 @@ async def faq_edit_media_accept(callback: CallbackQuery, state: FSMContext, bot:
     # ==== Обновляем FSM state ====
     await state.clear()
 
+    logging.warning(f'Пользователь: {telegram_id} поменял медия для faq: {faq_id}')
     await callback.message.edit_text(
         f"✅ Медиа успешно обновлено! Сохранено файлов: {len(saved_paths)}",
         reply_markup=button

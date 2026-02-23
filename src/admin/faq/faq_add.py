@@ -281,5 +281,6 @@ async def accept_faq(callback: CallbackQuery, state: FSMContext):
 
         await callback.answer("✅ FAQ успешно добавлен!")
 
+        logging.warning(f'Пользователь: {telegram_id} добавил faq: {title}')
         await root_menu(cal=callback, type="CallbackAndImage")
         await state.clear()

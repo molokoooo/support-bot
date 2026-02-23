@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -13,9 +14,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from src.root.command import root_menu
 from . import router
 from src.crud.user import check_role
-from src.admin.faq.class_state import FAQEditState
 from src.database.redisDB import r_session
-from src.crud.faq import load_faq_list, load_faq_info
 from src.database.sql_engine import get_db
 from src.model.about_model import About
 from src.admin.class_state import AboutState
@@ -117,7 +116,9 @@ async def about_accept(callback: CallbackQuery, state: FSMContext):
         await r_session.expire("about:ids", 1800)
         await r_session.expire(f"about:{new_about.id}", 1800)
 
+    logging.warning(f'Пользователь: {telegram_id} добавил "О нас" а именно: {title}')
     await callback.message.edit_text(text="✅ Успешно добавлено!", reply_markup=button)
+    await state.clear()
 
 
 @router.callback_query(F.data == "about:remove")
@@ -209,4 +210,5 @@ async def about_remove(callback: CallbackQuery):
     builder.adjust(1)
     button = builder.as_markup()
 
+    logging.warning(f'Пользователь: {telegram_id} удалил "О нас" а именно: {id}')
     await callback.message.edit_text(text="✅ Успешно удаленно!", reply_markup=button)

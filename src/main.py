@@ -10,7 +10,7 @@ from src.database.redisDB import r_session
 from src.database.sql_engine import Base, engine
 from src import dp, token
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 
 async def main():
     asyncio.create_task(remove_old_tickets())
@@ -20,15 +20,15 @@ async def main():
             connection.execute(text("SELECT 1"))
         Base.metadata.create_all(engine)
 
-        logging.info("Подключение к БД успешно...")
+        logging.warning("Подключение к БД успешно...")
         await r_session.ping()
-        logging.info("Подключение к РЕДИС успешно...")
+        logging.warning("Подключение к РЕДИС успешно...")
 
     except OperationalError:
         logging.error("Не удалось подключиться к БД!")
 
     except ConnectionError:
-        logging.info("Подключение не к РЕДИС не успешно!")
+        logging.error("Подключение не к РЕДИС не успешно!")
 
     logging.info("Бот успешно запущен...")
     await dp.start_polling(bot)
