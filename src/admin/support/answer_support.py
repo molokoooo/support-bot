@@ -407,7 +407,7 @@ async def receive_ticket_answer(message: Message, state: FSMContext, bot: Bot):
                 # Если пользователь заблокировал бота, просто игнорируем
             await message.answer(f"⚠️ Не удалось отправить пользователю {ticket.user_telegram_id}: {e}")
 
-    logging.warning(f'Пользователь: {telegram_id} ответил на вопрос {ticket_id}')
+    logging.warning(f'Пользователь: {telegram_id} ответил на вопрос {ticket_id}, ответ был {message.text}')
     await message.answer("✅ Ответ отправлен пользователю.")
     await root_menu(message, "Command")
     await state.clear()
