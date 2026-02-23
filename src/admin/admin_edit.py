@@ -83,7 +83,7 @@ async def admin_list(callback: CallbackQuery):
     builder.row(*role_buttons)
     builder.row(
         InlineKeyboardButton(text="➕ Добавить", style="success", callback_data="admin_add_search_remove"),
-        InlineKeyboardButton(text="🔎 Поиск по ID", style="primary", callback_data="admin_add_search_remove"),
+        InlineKeyboardButton(text="🔎 Поиск", style="primary", callback_data="admin_add_search_remove"),
         InlineKeyboardButton(text="➖ Удалить", style="success", callback_data="admin_add_search_remove")
     )
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data="admin_panel:menu"))
