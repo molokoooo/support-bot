@@ -18,11 +18,11 @@ async def admin_panel_menu(callback: CallbackQuery):
 
     builder = InlineKeyboardBuilder()
     if role == "SuperAdmin":
-        builder.button(text="👤 Админы", style="danger", callback_data="admin:list")
+        builder.button(text="👤 Админы", style="danger", callback_data="admin:list:all")
 
     builder.button(text="👥 Изменить о нас", callback_data="about:menu:edit")
     builder.button(text="⁉️ Изменить FAQ", callback_data="faq:edit")
-    builder.button(text="📨 Тех. поддержка", callback_data="support:menu")
+    builder.button(text="📨 Тех. поддержка", callback_data="support:answer:menu:all:1")
     builder.button(text="◀️ Назад", callback_data="back:menu")
 
     if role == "Admin":

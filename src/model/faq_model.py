@@ -10,5 +10,6 @@ class FAQ(Base):
     title: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(nullable=False)
     media: Mapped[list] = mapped_column(JSONB, nullable=True, default=list)
+    count: Mapped[int] = mapped_column(nullable=True, default=0)
 
     # В БУДУЩЕМ МОЖНО ВВЕСТИ ОТЧЁТ СКОЛЬКО РАЗ ОБРАЩАЛИСЬ

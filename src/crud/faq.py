@@ -1,15 +1,19 @@
+import asyncio
 import json, math, mimetypes, os
+import logging
+from datetime import datetime, timedelta
 
 from typing import Annotated
 from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.utils.media_group import MediaGroupBuilder
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete, update
 
 from src.database.redisDB import r_session
 from src.database.sql_engine import get_db
 from src.model.faq_model import FAQ
+from src.model.user_model import Ticket
 
 page_size = int(os.getenv("FAQ_PAGE_SIZE"))
 
@@ -49,6 +53,7 @@ async def load_faq_list(page: int, role: Annotated["Admin", "User"]):
             # Преобразуем все поля в str и сохраняем в список словарей
             faq_list = []
             for f in result:
+                await r_session.incr(f"faq:uses:{f.id}")
                 faq_list.append({
                     "id": str(f.id),
                     "title": str(f.title),
@@ -66,7 +71,8 @@ async def load_faq_list(page: int, role: Annotated["Admin", "User"]):
     else:
         for faq in faq_list:
             if role == "Admin":
-                builder.button(text=faq["title"], callback_data=f"faq:edit-{faq['id']}-{page}")
+                uses = await r_session.get(f"faq:uses:{faq['id']}")
+                builder.button(text=f"{faq["title"]} | {uses}", callback_data=f"faq:edit-{faq['id']}-{page}")
             else:
                 builder.button(text=faq["title"], callback_data=f"faq_id:{faq['id']}:{page}")
 
@@ -127,6 +133,8 @@ async def load_faq_info(callback, id: int, page: int, role: Annotated["Admin", "
     # ==== Попытка взять страницу из Redis ====
     page_info_redis = await r_session.get(redis_key)
     if page_info_redis:
+        await r_session.incr(f"faq:uses:{id}")
+        await r_session.expire(f"faq:uses:{id}", 4000)
         faq_list = json.loads(page_info_redis)
     else:
         # ==== Если нет в Redis — читаем из БД и сохраняем страницу ====
@@ -212,3 +220,33 @@ async def load_faq_info(callback, id: int, page: int, role: Annotated["Admin", "
     await state.update_data(faq_messages=[m.message_id for m in sent_messages])
 
     await callback.message.delete()
+
+async def remove_old_tickets():
+    while True:
+        target_time = datetime.now() - timedelta(hours=12)
+
+        # 1. Удаляем старые тикеты
+        with get_db() as db:
+            db.execute(
+                delete(Ticket).where(Ticket.close_date <= target_time)
+            )
+
+            # 2. Читаем ключи через SCAN
+            async for key in r_session.scan_iter("faq:uses:*"):
+                faq_id = int(key.split(":")[-1])
+
+                # GETDEL — если поддерживается Redis 6.2+
+                count = await r_session.getdel(key)
+                if not count:
+                    continue
+
+                db.execute(
+                    update(FAQ)
+                    .where(FAQ.id == faq_id)
+                    .values(count=FAQ.count + int(count))
+                )
+
+            db.commit()
+
+        logging.info(f"Удалены тикеты до {target_time}")
+        await asyncio.sleep(3600)

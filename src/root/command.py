@@ -18,21 +18,22 @@ async def root_menu(
     Main menu page
     """
     telegram_id = cal.from_user.id
+    username = cal.from_user.username
 
     builder = InlineKeyboardBuilder()
     # ==== KEYBORD ALL ====
     builder.button(text="⁉️ FAQ", callback_data="faq:menu-page:1")
     builder.button(text="👥 О нас", callback_data="about:menu")
-    builder.button(text="📨 Тех. поддержка", callback_data="support:menu")
+    builder.button(text="📨 Тех. поддержка", callback_data="support")
 
-    role = await check_role(telegram_id)
+    role = await check_role(telegram_id, username)
 
     if role in ("SuperAdmin", "Admin"):
         builder.button(text="🛡 Админ меню", style="danger", callback_data="admin_panel:menu")
     elif role == "FAQ":
         builder.button(text="⁉️ Изменить FAQ", style="danger", callback_data="faq:edit")
     elif role == "Support":
-        builder.button(text="📨 Ответить Тех. поддержку", style="danger", callback_data="suuport:answer:menu")
+        builder.button(text="📨 Ответить Тех. поддержку", style="danger", callback_data="support:answer:menu:all")
 
     builder.adjust(2, 1)
     button = builder.as_markup()

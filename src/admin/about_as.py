@@ -202,6 +202,7 @@ async def about_remove(callback: CallbackQuery):
         db.execute(stmt)
         db.commit()
         await r_session.srem("about:ids", id)
+        await r_session.delete(f"about:{id}")
 
     builder = InlineKeyboardBuilder()
     builder.button(text="◀️ Назад в главное меню", style="success", callback_data="about:remove")

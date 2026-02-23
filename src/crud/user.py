@@ -1,13 +1,14 @@
 import re
 
 from sqlalchemy import select
+from typing import Optional
 
 from src.database.redisDB import r_session
 from src.database.sql_engine import get_db
 from src.model.user_model import User
 
 
-async def check_role(telegram_id: str):
+async def check_role(telegram_id: str, username: Optional[str] = None):
     """
     Получает роль пользователя по его Telegram ID.
 
@@ -23,7 +24,7 @@ async def check_role(telegram_id: str):
         with get_db() as db:
             user = db.scalar(select(User).where(User.telegram_id == str(telegram_id)))
             if not user:
-                user = User(telegram_id=str(telegram_id))
+                user = User(telegram_id=str(telegram_id), username=username)
                 db.add(user)
                 db.commit()
                 db.refresh(user)
