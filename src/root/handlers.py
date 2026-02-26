@@ -43,6 +43,9 @@ async def about(callback: CallbackQuery):
         with get_db() as db:
             result = db.scalars(select(About)).all()
 
+            if not result:
+                await callback.answer("Раздел пока пустой!")
+
             for obj in result:
                 await r_session.hset(
                     f"about:{obj.id}",
